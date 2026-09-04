@@ -35,6 +35,5 @@ export function registerGrokGoalStateRpc(ctx: Context, store: GrokGoalStateStore
       }
       return { ok: true, value: { goal: store.get(session) } }
     },
-    { authority: 'loopback' },
   )
 }

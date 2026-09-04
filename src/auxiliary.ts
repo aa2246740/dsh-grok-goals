@@ -80,12 +80,11 @@ function usageEvent(event: SessionEvent): { readonly turn: number; readonly step
 }
 
 export function sessionOwnTokenTotal(session: Session): number {
-  const seedLength = Math.max(0, Math.min(session.events.length, session.header.seedLength ?? 0))
   let total = 0
   let previousTurn = -1
   let previousStep = -1
   let previousTokens = 0
-  for (const event of session.events.slice(seedLength)) {
+  for (const event of session.ownEvents()) {
     const sample = usageEvent(event)
     if (sample === null) continue
     const tokens = tokenUsageTotal(sample.usage)

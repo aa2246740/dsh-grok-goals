@@ -7,11 +7,9 @@ function resolveHarness() {
   const configured = process.env.DSHX_HARNESS?.trim()
   const configPath = join(homedir(), '.config/dshx/harness')
   const recorded = existsSync(configPath) ? readFileSync(configPath, 'utf8').trim() : undefined
-  const roots = [...new Set([configured, recorded].filter(Boolean).map(value => resolve(value)))]
-  if (roots.length !== 1) {
-    throw new Error('dshx client build requires one Harness root from DSHX_HARNESS or ~/.config/dshx/harness')
-  }
-  return roots[0]
+  const selected = configured === undefined || configured.length === 0 ? recorded : configured
+  if (!selected) throw new Error('dshx client build requires a Harness root from DSHX_HARNESS or ~/.config/dshx/harness')
+  return resolve(selected)
 }
 
 const adapter = join(resolveHarness(), 'tools/dshx/src/client-build.js')
