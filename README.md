@@ -32,21 +32,24 @@ The native Harness Goal service remains installed but dormant for participating 
 /goal clear
 ```
 
-Only a trailing, standalone, positive all-digit `--budget` value is consumed. Malformed or in-sentence budget text remains part of the objective, matching Grok Build’s grammar.
+Only a trailing, standalone, positive all-digit `--budget` value is consumed. Malformed or in-sentence budget text remains part of the objective, matching Grok Build’s grammar. If `--budget` is omitted, the plugin settings default applies. That default is unlimited unless you turn it off in Settings → Plugins.
 
 The Goal dock exposes status, objective, token usage, pause/resume, and a responsive details dialog containing the frozen plan, todos, verifier gaps, strategist note, recent history, and completion summary. Clear requires an explicit confirmation.
 
-## Configuration
+## Settings
+
+The plugin card is under DSH Settings → Plugins. New goals without `/goal --budget` use that default. `create_goal` does not pick a cap.
 
 ```yaml
-# dshx.yml / Cordis config shape
+unlimitedTokenBudget: true
+defaultTokenBudget: 200000
 classifierMaxRuns: 10
 verifierCount: 3
 strategistEvery: 5
 enabled: true
 ```
 
-`verifierCount` is clamped by validation to 1–5. Defaults mirror the ported behavior: ten verifier attempts, three skeptics, and a strategist trigger every five consecutive rejected verifications.
+`verifierCount` is clamped to 1–5. Defaults: unlimited tokens, ten verifier attempts, three skeptics, and a strategist after five consecutive rejected verifications. Changing the default budget does not rewrite a goal that is already running.
 
 ## Build and test
 

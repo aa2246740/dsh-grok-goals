@@ -5,15 +5,19 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
+import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
+import type {} from '@deepseek-ai/dsh-client-ui-settings-plugins/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type {} from '@deepseek-ai/dsh-tool-todo/client'
 import type {} from '../types.js'
+import { GROK_GOAL_SETTINGS_NAMESPACE, type GrokGoalSettings } from '../settings-contract.js'
 import {
   GROK_GOAL_RPC_CHANNEL,
   GROK_GOAL_STATE_ENDPOINT,
   parseGrokGoalStateResponse,
 } from '../wire.js'
 import { GrokGoalDock, type GrokGoalDockInjected } from './GrokGoalDock.js'
+import { GrokGoalSettingsCard, type GrokGoalSettingsInjected } from './GrokGoalSettings.js'
 import { en, zh, type GrokGoalKey } from './locales.js'
 
 export { GrokGoalDock } from './GrokGoalDock.js'
@@ -21,7 +25,7 @@ export type { GrokGoalDockInjected } from './GrokGoalDock.js'
 
 const NS = 'grokGoal'
 
-export const inject = ['connection', 'slots', 'remote', 'remote.commands', 'locale']
+export const inject = ['connection', 'slots', 'remote', 'remote.commands', 'locale', 'settingsScope']
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -31,6 +35,16 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 
 export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-grok-goals: dictionaries')
+
+  const goalSettings = ctx.settingsScope.bind<GrokGoalSettings>({ namespace: GROK_GOAL_SETTINGS_NAMESPACE })
+  ctx.slots.inject('settings.plugin.item', () => ctx.slots.register({
+    name: 'settings.plugin.item',
+    key: GROK_GOAL_SETTINGS_NAMESPACE,
+    inject: (): GrokGoalSettingsInjected => ({
+      scope: goalSettings,
+      locale: ctx.locale.getLocale().active,
+    }),
+  }, GrokGoalSettingsCard))
 
   ctx.slots.inject('conversation.input.dock', () => ctx.slots.register({
     name: 'conversation.input.dock',

@@ -54,6 +54,7 @@ import {
   verifierPrompt,
   type GoalEvaluatorDecision,
 } from './prompts.js'
+import { resolveGoalTokenBudget, type ResolvedConfig } from './budget.js'
 import type {
   GrokGoalBlocking,
   GrokGoalChangeOperation,
@@ -63,11 +64,7 @@ import type {
   GrokGoalVerifierFinding,
 } from './types.js'
 
-export interface GrokGoalEngineConfig {
-  readonly classifierMaxRuns: number
-  readonly verifierCount: number
-  readonly strategistEvery: number
-}
+export type GrokGoalEngineConfig = Omit<ResolvedConfig, 'enabled'>
 
 export interface GoalCommandCreateOptions {
   readonly objective: string
@@ -119,9 +116,17 @@ export class GrokGoalEngine {
 
   constructor(
     private readonly ctx: Context,
-    private readonly config: GrokGoalEngineConfig,
+    private readonly getConfig: () => GrokGoalEngineConfig,
     private readonly store: GrokGoalStateStore,
   ) {}
+
+  private get config(): GrokGoalEngineConfig {
+    return this.getConfig()
+  }
+
+  resolvedCreateBudget(explicitBudget: number | null): number | null {
+    return resolveGoalTokenBudget({ explicitBudget, config: this.config })
+  }
 
   private abortTurnRun(agent: Agent, reason: string): void {
     this.turnRuns.get(agent)?.abort(reason)

@@ -3,3 +3,11 @@ entry: src/dsh-grok-goals.ts
 marker: "[my-plugins/dsh-grok-goals] loaded"
 kind: client
 profile: web
+hotReload:
+  artifacts:
+    - src/dsh-grok-goals.ts
+    - src/budget.ts
+    - src/config.ts
+    - src/engine.ts
+    - src/scoped-adapter.ts
+    - src/settings-contract.ts
