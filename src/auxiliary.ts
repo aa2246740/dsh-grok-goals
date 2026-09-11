@@ -3,6 +3,7 @@ import type { Agent } from '@deepseek-ai/dsh-agent'
 import {
   BlockAssembler,
   createUserMessage,
+  lastAssistantStreamChunk,
   type ContentBlock,
   type GenerateOptions,
   type Message,
@@ -70,13 +71,12 @@ export function sessionTokenTotal(ctx: Context, session: Session): number {
 }
 
 function usageEvent(event: SessionEvent): { readonly turn: number; readonly step: number; readonly usage: TokenUsage } | null {
-  if (event.type === 'assistant/chunk' && event.data.chunk.type === 'usage') {
-    return { turn: event.data.turn, step: event.data.step, usage: event.data.chunk.usage }
-  }
   if (event.type === 'assistant/message' && event.data.usage !== undefined) {
     return { turn: event.data.turn, step: event.data.step, usage: event.data.usage }
   }
-  return null
+  if (event.type !== 'assistant/message' && event.type !== 'assistant/attempt') return null
+  const usage = lastAssistantStreamChunk(event.data.stream, 'usage')?.usage
+  return usage === undefined ? null : { turn: event.data.turn, step: event.data.step, usage }
 }
 
 export function sessionOwnTokenTotal(session: Session): number {

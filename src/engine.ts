@@ -192,7 +192,6 @@ export class GrokGoalEngine {
             kind: 'plugin',
             plugin: 'dsh-grok-goals',
             form: 'instructions',
-            summary: 'Grok goal started',
           },
         }))
       } catch (error: unknown) {
@@ -961,7 +960,6 @@ export class GrokGoalEngine {
         kind: 'plugin',
         plugin: 'dsh-grok-goals',
         form: 'instructions',
-        summary: 'Grok goal continuation',
       },
     })
     agent.steer(message)

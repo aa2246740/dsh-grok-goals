@@ -11,3 +11,4 @@ hotReload:
     - src/engine.ts
     - src/scoped-adapter.ts
     - src/settings-contract.ts
+    - lib/dsh-grok-goals.js

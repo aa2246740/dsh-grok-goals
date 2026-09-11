@@ -147,13 +147,13 @@ export function installScopedGoalAdapter(ctx: Context, agent: Agent, engine: Gro
     description: 'Create and control one host-owned Grok-style autonomous goal.',
     input: {
       hint: '<objective> [--budget <tokens>] | status | pause | resume | clear',
-      images: true,
+      attachments: true,
     },
     handler: async (invocation) => {
       try {
         const command = parseGoalCommand(invocation.rawInput)
         if (invocation.attachments.length > 0 && command.kind !== 'create') {
-          return { kind: 'error' as const, text: 'Images are accepted only when creating a goal.' }
+          return { kind: 'error' as const, text: 'Attachments are accepted only when creating a goal.' }
         }
         switch (command.kind) {
           case 'status': return commandMessage('Grok goal status', engine.statusText(agent))
@@ -223,7 +223,6 @@ export function installScopedGoalAdapter(ctx: Context, agent: Agent, engine: Gro
               kind: 'plugin',
               plugin: 'dsh-grok-goals',
               form: 'instructions',
-              summary: 'Grok goal started',
             },
           }))
         } catch (error: unknown) {

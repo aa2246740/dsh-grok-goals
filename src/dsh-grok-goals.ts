@@ -2,6 +2,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-commands'
 import type {} from '@deepseek-ai/dsh-client-connection'
+import type {} from '@deepseek-ai/dsh-host-webserver'
 import type {} from '@deepseek-ai/dsh-goal'
 import type {} from '@deepseek-ai/dsh-llm'
 import type {} from '@deepseek-ai/dsh-session'
@@ -36,6 +37,7 @@ export const inject = [
   'subagents',
   'systemPrompt',
   'tools',
+  'webServer',
 ]
 
 export { Config, GROK_GOAL_SETTINGS_NAMESPACE } from './config.js'
