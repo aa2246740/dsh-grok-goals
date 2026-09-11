@@ -6,6 +6,7 @@ profile: web
 hotReload:
   artifacts:
     - src/dsh-grok-goals.ts
+    - src/replacement.ts
     - src/budget.ts
     - src/config.ts
     - src/engine.ts

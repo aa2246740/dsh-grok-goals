@@ -20,6 +20,7 @@ import {
   type Config as GrokGoalConfig,
 } from './config.js'
 import { GrokGoalEngine } from './engine.js'
+import { installGoalReplacement } from './replacement.js'
 import { installScopedGoalAdapter } from './scoped-adapter.js'
 import { registerGrokGoalStateRpc } from './state-rpc.js'
 import { GrokGoalStateStore } from './state-store.js'
@@ -61,6 +62,7 @@ export async function apply(ctx: Context, config: GrokGoalConfig = {}): Promise<
     return
   }
 
+  await installGoalReplacement(ctx)
   const store = await GrokGoalStateStore.open(ctx)
   ctx.effect(() => () => store.close(), 'dsh-grok-goals: state store')
   registerGrokGoalStateRpc(ctx, store)
