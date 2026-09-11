@@ -19,4 +19,8 @@ describe('client package metadata', () => {
   it('declares the client Connection dependency used by Goal state RPC', () => {
     expect(manifest.dsh.client.inject).toContain('@deepseek-ai/dsh-client-connection')
   })
+
+  it('declares the settings-plugins client for the Plugins settings card', () => {
+    expect(manifest.dsh.client.inject).toContain('@deepseek-ai/dsh-client-ui-settings-plugins')
+  })
 })

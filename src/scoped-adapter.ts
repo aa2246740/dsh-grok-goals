@@ -147,13 +147,13 @@ export function installScopedGoalAdapter(ctx: Context, agent: Agent, engine: Gro
     description: 'Create and control one host-owned Grok-style autonomous goal.',
     input: {
       hint: '<objective> [--budget <tokens>] | status | pause | resume | clear',
-      images: true,
+      attachments: true,
     },
     handler: async (invocation) => {
       try {
         const command = parseGoalCommand(invocation.rawInput)
         if (invocation.attachments.length > 0 && command.kind !== 'create') {
-          return { kind: 'error' as const, text: 'Images are accepted only when creating a goal.' }
+          return { kind: 'error' as const, text: 'Attachments are accepted only when creating a goal.' }
         }
         switch (command.kind) {
           case 'status': return commandMessage('Grok goal status', engine.statusText(agent))
@@ -172,7 +172,7 @@ export function installScopedGoalAdapter(ctx: Context, agent: Agent, engine: Gro
           case 'create': {
             const goal = await engine.create(agent, {
               objective: command.objective,
-              tokenBudget: command.tokenBudget,
+              tokenBudget: engine.resolvedCreateBudget(command.tokenBudget),
               attachments: invocation.attachments,
               delivery: 'followup',
             }, invocation.signal)
@@ -203,17 +203,16 @@ export function installScopedGoalAdapter(ctx: Context, agent: Agent, engine: Gro
 
   ctx.tools.register(defineTool({
     name: 'create_goal',
-    description: 'Create one long-running host-owned Grok-style goal for a direct human request. Use token_budget as a token cap, not a round cap. Do not use for routine single-turn work.',
+    description: 'Create one long-running host-owned Grok-style goal for a direct human request. The token cap comes from plugin settings (unlimited by default). Humans can still set one goal with /goal <objective> --budget <tokens>. Do not use for routine single-turn work.',
     parameters: {
       objective: { type: 'string', required: true, description: 'Concrete completion objective.' },
-      token_budget: { type: 'number', description: 'Optional positive safe-integer token budget.' },
     },
     output: GOAL_OUTPUT,
     async execute(args, exec) {
       const currentAgent = requireDirectHumanToolCall(ctx, exec)
       const goal = await engine.create(currentAgent, {
         objective: args.objective,
-        tokenBudget: args.token_budget ?? null,
+        tokenBudget: engine.resolvedCreateBudget(null),
         delivery: 'none',
       }, exec.signal)
       if (goal.status === 'active' && goal.plan !== null) {
@@ -224,7 +223,6 @@ export function installScopedGoalAdapter(ctx: Context, agent: Agent, engine: Gro
               kind: 'plugin',
               plugin: 'dsh-grok-goals',
               form: 'instructions',
-              summary: 'Grok goal started',
             },
           }))
         } catch (error: unknown) {

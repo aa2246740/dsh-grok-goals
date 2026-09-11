@@ -1,17 +1,24 @@
 import type { Context } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-commands'
 import type {} from '@deepseek-ai/dsh-client-connection'
+import type {} from '@deepseek-ai/dsh-host-webserver'
 import type {} from '@deepseek-ai/dsh-goal'
 import type {} from '@deepseek-ai/dsh-llm'
 import type {} from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-session-projection'
+import type {} from '@deepseek-ai/dsh-settings'
 import type {} from '@deepseek-ai/dsh-storage-domain'
 import type {} from '@deepseek-ai/dsh-subagent'
 import type {} from '@deepseek-ai/dsh-system-prompt'
 import type {} from '@deepseek-ai/dsh-tools'
 import type {} from '@deepseek-ai/dsh-token-meter/client'
+import {
+  Config,
+  GROK_GOAL_SETTINGS_NAMESPACE,
+  resolveConfig,
+  type Config as GrokGoalConfig,
+} from './config.js'
 import { GrokGoalEngine } from './engine.js'
 import { installScopedGoalAdapter } from './scoped-adapter.js'
 import { registerGrokGoalStateRpc } from './state-rpc.js'
@@ -30,56 +37,25 @@ export const inject = [
   'subagents',
   'systemPrompt',
   'tools',
+  'webServer',
 ]
 
-export interface Config {
-  readonly enabled?: boolean
-  readonly classifierMaxRuns?: number
-  readonly verifierCount?: number
-  readonly strategistEvery?: number
-}
-
-export const Config: z<Config> = z.object({
-  enabled: z.boolean().default(true),
-  classifierMaxRuns: z.number().step(1).min(1).default(10),
-  verifierCount: z.number().step(1).min(1).max(5).default(3),
-  strategistEvery: z.number().step(1).min(1).default(5),
-})
-
-interface ResolvedConfig {
-  readonly enabled: boolean
-  readonly classifierMaxRuns: number
-  readonly verifierCount: number
-  readonly strategistEvery: number
-}
-
-function resolveConfig(config: Config): ResolvedConfig {
-  const resolved = {
-    enabled: config.enabled ?? true,
-    classifierMaxRuns: config.classifierMaxRuns ?? 10,
-    verifierCount: config.verifierCount ?? 3,
-    strategistEvery: config.strategistEvery ?? 5,
-  }
-  if (!Number.isSafeInteger(resolved.classifierMaxRuns) || resolved.classifierMaxRuns < 1) {
-    throw new TypeError('classifierMaxRuns must be a positive safe integer')
-  }
-  if (!Number.isSafeInteger(resolved.verifierCount)
-    || resolved.verifierCount < 1
-    || resolved.verifierCount > 5) {
-    throw new TypeError('verifierCount must be an integer from 1 through 5')
-  }
-  if (!Number.isSafeInteger(resolved.strategistEvery) || resolved.strategistEvery < 1) {
-    throw new TypeError('strategistEvery must be a positive safe integer')
-  }
-  return resolved
-}
+export { Config, GROK_GOAL_SETTINGS_NAMESPACE } from './config.js'
 
 function isRootAgent(agent: Agent): boolean {
   return agent.session.header.origin !== 'subagent'
 }
 
-export async function apply(ctx: Context, config: Config = {}): Promise<void> {
-  const resolved = resolveConfig(config)
+export async function apply(ctx: Context, config: GrokGoalConfig = {}): Promise<void> {
+  let source: () => GrokGoalConfig = () => config
+  ctx.inject(['settings'], (settingsCtx) => {
+    settingsCtx.settings.installSection(ctx, GROK_GOAL_SETTINGS_NAMESPACE, Config, config, {
+      setSource: current => { source = current },
+      onChange: () => {},
+    })
+  })
+
+  const resolved = resolveConfig(source())
   if (!resolved.enabled) {
     ctx.logger.info('[my-plugins/dsh-grok-goals] disabled')
     return
@@ -88,7 +64,7 @@ export async function apply(ctx: Context, config: Config = {}): Promise<void> {
   const store = await GrokGoalStateStore.open(ctx)
   ctx.effect(() => () => store.close(), 'dsh-grok-goals: state store')
   registerGrokGoalStateRpc(ctx, store)
-  const engine = new GrokGoalEngine(ctx, resolved, store)
+  const engine = new GrokGoalEngine(ctx, () => resolveConfig(source()), store)
   const fibers = new Map<Agent, ReturnType<Context['inject']>>()
   const disposalTasks = new Set<Promise<void>>()
 
