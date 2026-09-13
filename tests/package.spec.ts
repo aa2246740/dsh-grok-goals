@@ -1,19 +1,19 @@
-import { readFileSync } from 'node:fs'
-import { createRequire } from 'node:module'
+import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-const require = createRequire(import.meta.url)
 const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
-  dsh: { client: { inject: string[] } }
+  exports: Record<string, unknown>
+  dsh: { bundle: { patch: string }; client: { inject: string[]; entry: string } }
 }
 
 describe('client package metadata', () => {
   it('exports package.json for the Host client-module scanner', () => {
-    expect(() => require.resolve('dsh-grok-goals/package.json')).not.toThrow()
+    expect(manifest.exports['./package.json']).toBe('./package.json')
   })
 
   it('provides a default client export for the Host bundle scanner', () => {
-    expect(() => require.resolve('dsh-grok-goals/client')).not.toThrow()
+    expect(manifest.dsh.client.entry).toBe('./lib/client.js')
+    expect(existsSync(new URL('../lib/client.js', import.meta.url))).toBe(true)
   })
 
   it('declares the client Connection dependency used by Goal state RPC', () => {

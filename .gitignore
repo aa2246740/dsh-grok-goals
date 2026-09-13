@@ -1,8 +1,9 @@
 node_modules/
-lib/
+lib/types/
 .dshx/
 *.tsbuildinfo
 .DS_Store
 .env
 .env.*
 coverage/
+*.tgz
